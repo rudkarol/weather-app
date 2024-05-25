@@ -15,8 +15,19 @@ fun WeatherApp() {
 //    val currentTemp = remember { mutableDoubleStateOf(0.0) }
 
     Column {
-        Button(onClick = { }) {
+        Button(onClick = { getWeather() }) {
             Text("Get Weather")
+        }
+    }
+}
+
+fun getWeather() {
+    runBlocking {
+        try {
+            val response = WeatherApi.retrofitService.getWeather("Warsaw")
+            Log.i("WeatherApp", response.current.lastUpdatedEpoch.toString())
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
