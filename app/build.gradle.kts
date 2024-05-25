@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
 }
+
+//load the values from .properties file
+val keystoreFile = project.rootProject.file("keystore.properties")
+val properties = Properties()
+properties.load(keystoreFile.inputStream())
 
 android {
     namespace = "com.example.weatherapp"
@@ -18,6 +26,19 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        //return empty key in case something goes wrong
+        val rapidApiKey = properties.getProperty("RAPID_API_KEY") ?: ""
+
+        buildConfigField(
+            type = "String",
+            name = "RAPID_API_KEY",
+            value = rapidApiKey
+        )
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -59,8 +80,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation ("com.google.code.gson:gson:2.10.1")
+    implementation(libs.retrofit)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
