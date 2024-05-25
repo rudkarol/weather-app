@@ -16,7 +16,17 @@ import retrofit2.http.Query
 private const val BASE_URL = "https://weatherapi-com.p.rapidapi.com"
 private const val API_KEY = BuildConfig.RAPID_API_KEY
 
-private val httpClient = OkHttpClient.Builder()
+class HeaderInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request().newBuilder()
+            .addHeader("X-RapidAPI-Key", API_KEY)
+            .addHeader("X-RapidAPI-Host", "weatherapi-com.p.rapidapi.com")
+            .build()
+        return chain.proceed(request)
+    }
+}
+
+private val httpClient = OkHttpClient.Builder().addInterceptor(HeaderInterceptor())
 private val json: Json = Json { ignoreUnknownKeys = true }
 
 private val retrofit = Retrofit.Builder()
