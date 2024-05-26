@@ -1,10 +1,10 @@
 package com.example.weatherapp.ui
 
-import android.annotation.SuppressLint
-import android.widget.Space
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
@@ -23,54 +23,55 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun WeatherApp() {
     var conditions by remember { mutableStateOf(WeatherData()) }
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = { TopBar(conditions) }
-    ) {
-        Content(conditions) { location ->
-            coroutineScope.launch {
-                val newConditions = getWeather(location)
+    fun getWeatherUpdate(location: String) {
+        coroutineScope.launch {
+            val newConditions = getWeather(location)
 
-                if (newConditions != null) {
-                    conditions = newConditions
-                }
+            if (newConditions != null) {
+                conditions = newConditions
             }
         }
+    }
+
+    Scaffold(
+        topBar = { TopBar(conditions) { getWeatherUpdate(it) } }
+    ) { innerPadding ->
+        Content(conditions, innerPadding) { getWeatherUpdate(it) }
     }
 }
 
 @Composable
-fun Content(conditions: WeatherData, onGetWeather: (String) -> Unit) {
-    Column {
-        Spacer(Modifier.size(64.dp))
-        Button(
-            onClick = {
-                onGetWeather("Warsaw")
-            }
-        ) {
-            Text("Get Weather")
-        }
-        Text(text = "Location: ${conditions.location?.name ?: "Unknown"}")
-        Text(text = "Temperature: ${conditions.current?.tempC ?: "N/A"}")
+fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: (String) -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top,
+        modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
+    ) {
+        Text(
+            text = "${conditions.current?.tempC ?: 0.0}\u00B0C",
+            fontSize = 64.sp
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(conditions: WeatherData) {
+fun TopBar(conditions: WeatherData, onGetWeather: (String) -> Unit) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     CenterAlignedTopAppBar(
@@ -82,7 +83,7 @@ fun TopBar(conditions: WeatherData) {
             )
         },
         navigationIcon = {
-            IconButton(onClick = { /* TODO */ }) {
+            IconButton(onClick = { onGetWeather("Warsaw") }) {
                 Icon(
                     imageVector = Icons.Filled.LocationOn,
                     contentDescription = "Get current location weather"
