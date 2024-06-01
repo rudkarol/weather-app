@@ -84,6 +84,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.converter.kotlinx.serialization)
     implementation(libs.okhttp)
+    implementation(libs.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

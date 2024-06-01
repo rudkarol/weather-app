@@ -2,6 +2,8 @@ package com.example.weatherapp.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -37,19 +39,38 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
+import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.tasks.await
 
 @Composable
-fun WeatherApp() {
+fun WeatherApp(fusedLocationClient: FusedLocationProviderClient) {
     var conditions by remember { mutableStateOf(WeatherData()) }
     val coroutineScope = rememberCoroutineScope()
 
-    fun getWeatherUpdate(location: String) {
+    fun getWeatherUpdate(locationName: String? = null) {
+        var location = ""
+
         coroutineScope.launch {
+            if (locationName != null) {
+                location = locationName
+            } else {
+                val lastKnownLocation = getLocation(fusedLocationClient)
+
+                if (lastKnownLocation != null) {
+                    location = "${lastKnownLocation.latitude},${lastKnownLocation.longitude}"
+                }
+            }
+
+            Log.d("WeatherApp location", "Getting weather for $location")
+
             val newConditions = getWeather(location)
+
             if (newConditions != null) {
                 conditions = newConditions
             }
@@ -65,7 +86,7 @@ fun WeatherApp() {
         hasLocationPermission = isGranted
 
         if (isGranted) {
-            getWeatherUpdate("Krakow")  // Replace with actual location
+            getWeatherUpdate()
         }
     }
 
@@ -74,7 +95,8 @@ fun WeatherApp() {
 
         if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
             hasLocationPermission = true
-            getWeatherUpdate("Opole")  // Replace with actual location
+
+            getWeatherUpdate()
         } else {
             permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
@@ -98,7 +120,7 @@ fun WeatherApp() {
 }
 
 @Composable
-fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: (String) -> Unit) {
+fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: (String?) -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
@@ -115,7 +137,7 @@ fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(conditions: WeatherData, onGetWeather: (String) -> Unit) {
+fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     CenterAlignedTopAppBar(
@@ -127,7 +149,8 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String) -> Unit) {
             )
         },
         navigationIcon = {
-            IconButton(onClick = { onGetWeather("Warsaw") }) {
+            IconButton(onClick = { onGetWeather(null) })
+            {
                 Icon(
                     imageVector = Icons.Filled.LocationOn,
                     contentDescription = "Get current location weather"
@@ -135,7 +158,7 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String) -> Unit) {
             }
         },
         actions = {
-            IconButton(onClick = { /* TODO */ }) {
+            IconButton(onClick = { onGetWeather("Warsaw") }) {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Search for a location"
@@ -150,7 +173,14 @@ suspend fun getWeather(location: String): WeatherData? {
     return try {
         WeatherApi.retrofitService.getWeather(location)
     } catch (e: Exception) {
-        e.printStackTrace()
+        null
+    }
+}
+
+suspend fun getLocation(fusedLocationClient: FusedLocationProviderClient): Location? {
+    return try {
+        fusedLocationClient.getLastLocation().await()
+    } catch (e: Exception) {
         null
     }
 }

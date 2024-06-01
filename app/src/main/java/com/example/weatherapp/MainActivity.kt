@@ -10,11 +10,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.weatherapp.ui.theme.WeatherAppTheme
 import com.example.weatherapp.ui.WeatherApp
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {
             WeatherAppTheme {
@@ -22,7 +27,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    WeatherApp()
+                    WeatherApp(fusedLocationClient)
                 }
             }
         }
