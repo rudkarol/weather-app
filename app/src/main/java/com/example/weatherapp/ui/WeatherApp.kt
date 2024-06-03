@@ -1,27 +1,22 @@
 package com.example.weatherapp.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
-import android.widget.Space
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +29,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,87 +41,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun WeatherApp(fusedLocationClient: FusedLocationProviderClient) {
-    var conditions by remember { mutableStateOf(WeatherData()) }
-    val coroutineScope = rememberCoroutineScope()
+fun WeatherApp(viewModel: WeatherViewModel) {
 
-    fun getWeatherUpdate(locationName: String? = null) {
-        var location = ""
 
-        coroutineScope.launch {
-            if (locationName != null) {
-                location = locationName
-            } else {
-                val lastKnownLocation = getLocation(fusedLocationClient)
-
-                if (lastKnownLocation != null) {
-                    location = "${lastKnownLocation.latitude},${lastKnownLocation.longitude}"
-                }
-            }
-
-            Log.d("WeatherApp location", "Getting weather for $location")
-
-            val newConditions = getWeather(location)
-
-            if (newConditions != null) {
-                conditions = newConditions
-            }
-        }
-    }
-
-    val context = LocalContext.current
-    var hasLocationPermission by remember { mutableStateOf(false) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasLocationPermission = isGranted
-
-        if (isGranted) {
-            getWeatherUpdate()
-        }
-    }
-
-    LaunchedEffect(key1 = context) {
-        val permissionStatus = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-
-        if (permissionStatus == PackageManager.PERMISSION_GRANTED) {
-            hasLocationPermission = true
-
-            getWeatherUpdate()
-        } else {
-            permissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
+    LaunchedEffect(key1 = LocalContext.current) {
+        viewModel.getWeatherUpdate(null)
     }
 
     Scaffold(
-        topBar = { TopBar(conditions) { getWeatherUpdate(it) } }
+        topBar = { TopBar(viewModel.conditions) { viewModel.getWeatherUpdate(it) } }
     ) { innerPadding ->
-        if (hasLocationPermission) {
-            Content(conditions, innerPadding) { getWeatherUpdate(it) }
+        if (viewModel.hasLocationPermission) {
+            Content(viewModel.conditions, innerPadding) { viewModel.getWeatherUpdate(it) }
+//            TODO show content on search field use (if no location permission is given)
         } else {
             ErrorContent(innerPadding)
         }
     }
-
-
 }
 
 @Composable
@@ -165,7 +110,7 @@ fun ErrorContent(innerPadding: PaddingValues) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -220,20 +165,4 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
         },
         scrollBehavior = scrollBehavior,
     )
-}
-
-suspend fun getWeather(location: String): WeatherData? {
-    return try {
-        WeatherApi.retrofitService.getWeather(location)
-    } catch (e: Exception) {
-        null
-    }
-}
-
-suspend fun getLocation(fusedLocationClient: FusedLocationProviderClient): Location? {
-    return try {
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-    } catch (e: Exception) {
-        null
-    }
 }
