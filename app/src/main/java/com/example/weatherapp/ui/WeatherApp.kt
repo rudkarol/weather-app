@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
+import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -11,8 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
@@ -21,6 +26,8 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,8 +41,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -133,21 +144,46 @@ fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: 
             text = "${conditions.current?.tempC ?: 0.0}\u00B0C",
             fontSize = 64.sp
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(value ="Warsaw", onValueChange = {} )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    var isSearchClicked by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     CenterAlignedTopAppBar(
         title = {
-            Text(
-                conditions.location?.name ?: "Weather App",
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (isSearchClicked) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    singleLine = true,
+                    onValueChange = { searchQuery = it },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = {
+                        onGetWeather(searchQuery)
+                        isSearchClicked = false
+                        searchQuery = ""
+                        keyboardController?.hide()
+                    }),
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .fillMaxWidth().
+                        padding(horizontal = 14.dp),
+                )
+            } else {
+                Text(
+                    text = conditions.location?.name ?: "Weather App",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         },
         navigationIcon = {
             IconButton(onClick = { onGetWeather(null) })
@@ -159,7 +195,7 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
             }
         },
         actions = {
-            IconButton(onClick = { onGetWeather("Warsaw") }) {
+            IconButton(onClick = { isSearchClicked = true }) {
                 Icon(
                     imageVector = Icons.Filled.Search,
                     contentDescription = "Search for a location"
@@ -180,7 +216,7 @@ suspend fun getWeather(location: String): WeatherData? {
 
 suspend fun getLocation(fusedLocationClient: FusedLocationProviderClient): Location? {
     return try {
-fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
     } catch (e: Exception) {
         null
     }
