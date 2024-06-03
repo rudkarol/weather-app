@@ -45,6 +45,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -114,21 +116,17 @@ fun WeatherApp(fusedLocationClient: FusedLocationProviderClient) {
         }
     }
 
-    if (hasLocationPermission) {
-        Scaffold(
-            topBar = { TopBar(conditions) { getWeatherUpdate(it) } }
-        ) { innerPadding ->
+    Scaffold(
+        topBar = { TopBar(conditions) { getWeatherUpdate(it) } }
+    ) { innerPadding ->
+        if (hasLocationPermission) {
             Content(conditions, innerPadding) { getWeatherUpdate(it) }
-        }
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("App requires location permission to function")
+        } else {
+            ErrorContent(innerPadding)
         }
     }
+
+
 }
 
 @Composable
@@ -144,8 +142,26 @@ fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: 
             text = "${conditions.current?.tempC ?: 0.0}\u00B0C",
             fontSize = 64.sp
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(value ="Warsaw", onValueChange = {} )
+    }
+}
+
+@Composable
+fun ErrorContent(innerPadding: PaddingValues) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.location_off_24dp_fill0_wght400_grad0_opsz24),
+            contentDescription = "Location permission required",
+            modifier = Modifier
+                .size(128.dp)
+                .padding(bottom = 16.dp)
+        )
+        Text("App requires location permission to function")
     }
 }
 
@@ -174,8 +190,8 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
                     }),
                     textStyle = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
-                        .fillMaxWidth().
-                        padding(horizontal = 14.dp),
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp),
                 )
             } else {
                 Text(
@@ -189,7 +205,7 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
             IconButton(onClick = { onGetWeather(null) })
             {
                 Icon(
-                    imageVector = Icons.Filled.LocationOn,
+                    painter = painterResource(id = R.drawable.my_location_24dp_fill0_wght400_grad0_opsz24),
                     contentDescription = "Get current location weather"
                 )
             }
@@ -197,7 +213,7 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
         actions = {
             IconButton(onClick = { isSearchClicked = true }) {
                 Icon(
-                    imageVector = Icons.Filled.Search,
+                    painter = painterResource(id = R.drawable.search_24dp_fill0_wght400_grad0_opsz24),
                     contentDescription = "Search for a location"
                 )
             }
