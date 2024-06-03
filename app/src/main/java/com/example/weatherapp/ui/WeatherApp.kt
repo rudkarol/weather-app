@@ -46,6 +46,7 @@ import com.example.weatherapp.network.WeatherApi
 import com.google.android.gms.location.FusedLocationProviderClient
 import kotlinx.coroutines.launch
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.tasks.await
 
 @Composable
@@ -179,7 +180,7 @@ suspend fun getWeather(location: String): WeatherData? {
 
 suspend fun getLocation(fusedLocationClient: FusedLocationProviderClient): Location? {
     return try {
-        fusedLocationClient.getLastLocation().await()
+fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
     } catch (e: Exception) {
         null
     }
