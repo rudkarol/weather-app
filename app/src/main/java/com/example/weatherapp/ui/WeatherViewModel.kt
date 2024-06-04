@@ -6,7 +6,11 @@ import android.content.pm.PackageManager
 import android.location.Location
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,6 +31,11 @@ class WeatherViewModel(
     private var location = ""
     var hasLocationPermission by mutableStateOf(false)
 
+    val focusRequester = FocusRequester()
+
+    var searchFieldUsed by mutableStateOf(false)
+    var isSearchClicked by mutableStateOf(false)
+    var searchQuery by mutableStateOf("")
 
     private suspend fun getLocation(
         fusedLocationClient: FusedLocationProviderClient
@@ -80,5 +89,11 @@ class WeatherViewModel(
         } catch (e: Exception) {
             null
         }
+    }
+
+    fun unfocus() {
+        focusRequester.freeFocus()
+        isSearchClicked = false
+        searchQuery = ""
     }
 }

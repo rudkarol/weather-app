@@ -1,5 +1,7 @@
 package com.example.weatherapp.ui
 
+
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,10 +29,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.PlatformImeOptions
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,18 +49,23 @@ import com.example.weatherapp.model.WeatherData
 
 @Composable
 fun WeatherApp(viewModel: WeatherViewModel) {
-
-
     LaunchedEffect(key1 = LocalContext.current) {
         viewModel.getWeatherUpdate(null)
     }
 
     Scaffold(
-        topBar = { TopBar(viewModel.conditions) { viewModel.getWeatherUpdate(it) } }
+        topBar = { TopBar(viewModel.conditions, viewModel) },
+        modifier = Modifier
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    if (viewModel.isSearchClicked) {
+                        viewModel.unfocus()
+                    }
+                })
+            }
     ) { innerPadding ->
-        if (viewModel.hasLocationPermission) {
+        if (viewModel.hasLocationPermission || viewModel.searchFieldUsed) {
             Content(viewModel.conditions, innerPadding)
-//            TODO show content on search field use (if no location permission is given)
         } else {
             ErrorContent(innerPadding)
         }
@@ -95,32 +110,35 @@ fun ErrorContent(innerPadding: PaddingValues) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
+fun TopBar(conditions: WeatherData, viewModel: WeatherViewModel) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    var isSearchClicked by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
 
     CenterAlignedTopAppBar(
         title = {
-            if (isSearchClicked) {
+            if (viewModel.isSearchClicked) {
                 OutlinedTextField(
-                    value = searchQuery,
+                    value = viewModel.searchQuery,
                     singleLine = true,
-                    onValueChange = { searchQuery = it },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    onValueChange = { viewModel.searchQuery = it },
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search,
+                        capitalization = KeyboardCapitalization.Words
+                    ),
                     keyboardActions = KeyboardActions(onSearch = {
-                        onGetWeather(searchQuery)
-                        isSearchClicked = false
-                        searchQuery = ""
-                        keyboardController?.hide()
+                        viewModel.getWeatherUpdate(viewModel.searchQuery)
+                        viewModel.searchFieldUsed = true
+                        viewModel.unfocus()
                     }),
                     textStyle = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
+                        .padding(horizontal = 14.dp)
+                        .focusRequester(viewModel.focusRequester),
                 )
+
+                LaunchedEffect(Unit) {
+                    viewModel.focusRequester.requestFocus()
+                }
             } else {
                 Text(
                     text = conditions.location?.name ?: "Weather App",
@@ -130,7 +148,14 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
             }
         },
         navigationIcon = {
-            IconButton(onClick = { onGetWeather(null) })
+            IconButton(
+                onClick = {
+                    if (viewModel.isSearchClicked) {
+                        viewModel.unfocus()
+                    }
+
+                    viewModel.getWeatherUpdate()
+                })
             {
                 Icon(
                     painter = painterResource(id = R.drawable.my_location_24dp_fill0_wght400_grad0_opsz24),
@@ -139,7 +164,10 @@ fun TopBar(conditions: WeatherData, onGetWeather: (String?) -> Unit) {
             }
         },
         actions = {
-            IconButton(onClick = { isSearchClicked = true }) {
+            IconButton(
+                onClick = {
+                    viewModel.isSearchClicked = !viewModel.isSearchClicked
+                }) {
                 Icon(
                     painter = painterResource(id = R.drawable.search_24dp_fill0_wght400_grad0_opsz24),
                     contentDescription = "Search for a location"
