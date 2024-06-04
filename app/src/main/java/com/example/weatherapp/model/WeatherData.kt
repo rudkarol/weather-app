@@ -39,7 +39,8 @@ data class Forecast(
 @Serializable
 data class ForecastDay(
     @SerialName("date_epoch") val dateEpoch: Long,
-    val day: Day
+    val day: Day,
+    @SerialName("hour") val hour: List<Hour>
 )
 
 @Serializable
@@ -48,5 +49,13 @@ data class Day(
     @SerialName("maxtemp_f") val maxTempF: Double,
     @SerialName("mintemp_c") val minTempC: Double,
     @SerialName("mintemp_f") val minTempF: Double,
+    val condition: Condition
+)
+
+@Serializable
+data class Hour(
+    @SerialName("time_epoch") val timeEpoch: Long,
+    @SerialName("temp_c") val tempC: Double,
+    @SerialName("temp_f") val tempF: Double,
     val condition: Condition
 )
