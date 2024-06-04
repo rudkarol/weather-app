@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
@@ -83,6 +84,10 @@ fun Content(conditions: WeatherData, innerPadding: PaddingValues) {
         Spacer(modifier = Modifier.height(24.dp))
 
         DailyForecastCard(conditions)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HourlyForecastCard(conditions)
     }
 }
 
@@ -187,13 +192,47 @@ fun DailyForecastCard(conditions: WeatherData) {
             conditions.forecast?.forecastDay?.let {
                 items(it.size) { index ->
                     val timestamp = conditions.forecast.forecastDay[index].dateEpoch
-                    val tempC = conditions.forecast.forecastDay[index].day.maxTempC.toString()
+                    val maxTempC = conditions.forecast.forecastDay[index].day.maxTempC
 
                     Text(
-                        text = "$timestamp $tempC",
+                        text = "$timestamp $maxTempC",
                         modifier = Modifier
                             .padding(8.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HourlyForecastCard(conditions: WeatherData) {
+    Card(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    ) {
+        LazyRow {
+            conditions.forecast?.forecastDay?.get(0)?.hour.let {
+                if (it != null) {
+                    items(it.size) { index ->
+                        val timestamp = conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.timeEpoch
+                        val tempC = conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
+
+                        Column(
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text(
+                                text = "$timestamp",
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+
+                            Text(
+                                text = "$tempC",
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
