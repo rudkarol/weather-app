@@ -23,11 +23,11 @@ data class Current(
     @SerialName("temp_c") val tempC: Double,
     @SerialName("temp_f") val tempF: Double,
     val condition: Condition,
-    @SerialName("humidity") val humidity: Int,
-    @SerialName("feelslike_c") val feelsLikeC: Int,
-    @SerialName("feelslike_f") val feelsLikeF: Int,
-    @SerialName("uv") val uv: Int,
-    @SerialName("pressure_mb") val pressureMb: Int,
+    @SerialName("humidity") val humidity: Double,
+    @SerialName("feelslike_c") val feelsLikeC: Double,
+    @SerialName("feelslike_f") val feelsLikeF: Double,
+    @SerialName("uv") val uv: Double,
+    @SerialName("pressure_mb") val pressureMb: Double,
     @SerialName("pressure_in") val pressureIn: Double,
     @SerialName("wind_mph") val windMph: Double,
     @SerialName("wind_kph") val windKph: Double,
@@ -59,7 +59,7 @@ data class Day(
     @SerialName("maxtemp_f") val maxTempF: Double,
     @SerialName("mintemp_c") val minTempC: Double,
     @SerialName("mintemp_f") val minTempF: Double,
-    @SerialName("daily_chance_of_rain") val dailyChanceOfRain: Int,
+    @SerialName("daily_chance_of_rain") val dailyChanceOfRain: Double,
     val condition: Condition
 )
 
