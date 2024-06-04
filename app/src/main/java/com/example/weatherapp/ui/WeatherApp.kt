@@ -1,13 +1,5 @@
 package com.example.weatherapp.ui
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.location.Location
-import android.util.Log
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,14 +21,11 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -45,14 +34,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
-import com.example.weatherapp.network.WeatherApi
-import com.google.android.gms.location.FusedLocationProviderClient
-import kotlinx.coroutines.launch
-import com.google.android.gms.location.Priority
-import kotlinx.coroutines.tasks.await
 
 @Composable
 fun WeatherApp(viewModel: WeatherViewModel) {
@@ -66,7 +49,7 @@ fun WeatherApp(viewModel: WeatherViewModel) {
         topBar = { TopBar(viewModel.conditions) { viewModel.getWeatherUpdate(it) } }
     ) { innerPadding ->
         if (viewModel.hasLocationPermission) {
-            Content(viewModel.conditions, innerPadding) { viewModel.getWeatherUpdate(it) }
+            Content(viewModel.conditions, innerPadding)
 //            TODO show content on search field use (if no location permission is given)
         } else {
             ErrorContent(innerPadding)
@@ -75,7 +58,7 @@ fun WeatherApp(viewModel: WeatherViewModel) {
 }
 
 @Composable
-fun Content(conditions: WeatherData, innerPadding: PaddingValues, onGetWeather: (String?) -> Unit) {
+fun Content(conditions: WeatherData, innerPadding: PaddingValues) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,

@@ -4,7 +4,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,7 +20,7 @@ import com.google.android.gms.location.LocationServices
 
 class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    lateinit var viewModel: WeatherViewModel
+    private lateinit var viewModel: WeatherViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -54,6 +53,7 @@ class MainActivity : ComponentActivity() {
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
         when (requestCode) {
             0 -> {
                 if ((grantResults.isNotEmpty() &&
@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
                     viewModel.hasLocationPermission = true
                     viewModel.getWeatherUpdate()
                 } else {
+                    // TODO
                     // Explain to the user that the feature is unavailable because
                     // the feature requires a permission that the user has denied.
                     // At the same time, respect the user's decision. Don't link to

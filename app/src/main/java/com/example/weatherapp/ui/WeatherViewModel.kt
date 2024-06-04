@@ -24,7 +24,7 @@ class WeatherViewModel(
 ): ViewModel(){
     var conditions by mutableStateOf(WeatherData())
         private set
-    var location = ""
+    private var location = ""
     var hasLocationPermission by mutableStateOf(false)
 
 
@@ -46,7 +46,7 @@ class WeatherViewModel(
                     arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
                     0
                 )
-                // TODO onRequestPermissionsResult
+
                 null
             }
         } catch (e: Exception) {
