@@ -6,11 +6,8 @@ import android.content.pm.PackageManager
 import android.location.Location
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -91,7 +88,7 @@ class WeatherViewModel(
         }
     }
 
-    fun unfocus() {
+    fun unFocus() {
         focusRequester.freeFocus()
         isSearchClicked = false
         searchQuery = ""
