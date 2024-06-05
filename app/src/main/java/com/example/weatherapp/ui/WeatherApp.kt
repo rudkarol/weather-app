@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -183,10 +186,10 @@ fun TopBar(conditions: WeatherData, viewModel: WeatherViewModel) {
 
 @Composable
 fun DailyForecastCard(conditions: WeatherData) {
-    Card(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
+    WeatherCard(
+        title = "3 Day Forecast",
+        icon = painterResource(id = R.drawable.calendar_today_24dp_fill0_wght400_grad0_opsz24),
+        iconDescription = "3 Day Forecast"
     ) {
         LazyColumn {
             conditions.forecast?.forecastDay?.let {
@@ -207,17 +210,19 @@ fun DailyForecastCard(conditions: WeatherData) {
 
 @Composable
 fun HourlyForecastCard(conditions: WeatherData) {
-    Card(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
+    WeatherCard(
+        title = "24h Forecast",
+        icon = painterResource(id = R.drawable.schedule_24dp_fill0_wght400_grad0_opsz24),
+        iconDescription = "24h Forecast"
     ) {
         LazyRow {
             conditions.forecast?.forecastDay?.get(0)?.hour.let {
                 if (it != null) {
                     items(it.size) { index ->
-                        val timestamp = conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.timeEpoch
-                        val tempC = conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
+                        val timestamp =
+                            conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.timeEpoch
+                        val tempC =
+                            conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
 
                         Column(
                             modifier = Modifier.padding(8.dp)
@@ -236,5 +241,47 @@ fun HourlyForecastCard(conditions: WeatherData) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun WeatherCard(
+    title: String?,
+    icon: Painter? = null,
+    iconDescription: String? = null,
+    content: @Composable() () -> Unit
+) {
+    Card(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    ) {
+        Column {
+            if (title != null) {
+                Row(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth(),
+                ) {
+                    if (icon != null && iconDescription != null) {
+                        Icon(painter = icon, contentDescription = iconDescription)
+                    }
+
+                    Text(
+                        text = title,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            content()
+        }
+        
     }
 }
