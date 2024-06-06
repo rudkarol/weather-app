@@ -10,8 +10,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.weatherapp.MainActivity
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
 import com.google.android.gms.location.LocationServices
@@ -20,12 +21,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 
-class WeatherViewModel(application: Application): AndroidViewModel(application){
+class WeatherViewModel(application: Application) : AndroidViewModel(application) {
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
     var conditions by mutableStateOf(WeatherData())
         private set
     private var location = ""
     var hasLocationPermission by mutableStateOf(false)
+    private val _requestLocationPermission = MutableLiveData<Boolean>()
+    val requestLocationPermission: LiveData<Boolean> get() = _requestLocationPermission
 
     val focusRequester = FocusRequester()
 
@@ -36,20 +39,14 @@ class WeatherViewModel(application: Application): AndroidViewModel(application){
     private suspend fun getLocation(): Location? {
         return try {
             if (ActivityCompat.checkSelfPermission(
-                    getApplication(),
+                    getApplication<Application>().applicationContext,
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 hasLocationPermission = true
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-            }
-            else {
-                ActivityCompat.requestPermissions(
-                    MainActivity().applicationContext as MainActivity,
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                    0
-                )
-
+            } else {
+                _requestLocationPermission.postValue(true)
                 null
             }
         } catch (e: Exception) {
@@ -89,9 +86,5 @@ class WeatherViewModel(application: Application): AndroidViewModel(application){
         focusRequester.freeFocus()
         isSearchClicked = false
         searchQuery = ""
-    }
-
-    companion object {
-        const val LOCATION_PERMISSION_REQUEST_CODE = 0
     }
 }
