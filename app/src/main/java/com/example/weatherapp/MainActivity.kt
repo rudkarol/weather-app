@@ -1,5 +1,6 @@
 package com.example.weatherapp
 
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,25 +20,13 @@ import com.google.android.gms.location.LocationServices
 
 
 class MainActivity : ComponentActivity() {
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var viewModel: WeatherViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
         setContent {
             WeatherAppTheme {
-                viewModel = viewModel<WeatherViewModel>(
-                    factory = object: ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            return WeatherViewModel(
-                                context = this@MainActivity,
-                                fusedLocationClient = fusedLocationClient
-                            ) as T
-                        }
-                    }
-                )
+                viewModel = ViewModelProvider(this).get(WeatherViewModel::class.java)
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -55,13 +44,12 @@ class MainActivity : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         when (requestCode) {
-            0 -> {
-                if ((grantResults.isNotEmpty() &&
-                            grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                ) {
+            WeatherViewModel.LOCATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     viewModel.hasLocationPermission = true
                     viewModel.getWeatherUpdate()
                 } else {
+                    viewModel.hasLocationPermission = false
                     // TODO
                     // Explain to the user that the feature is unavailable because
                     // the feature requires a permission that the user has denied.
