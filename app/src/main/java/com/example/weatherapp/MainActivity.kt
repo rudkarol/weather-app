@@ -1,6 +1,5 @@
 package com.example.weatherapp
 
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,14 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.weatherapp.ui.theme.WeatherAppTheme
 import com.example.weatherapp.ui.WeatherApp
 import com.example.weatherapp.ui.WeatherViewModel
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +21,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WeatherAppTheme {
-                viewModel = ViewModelProvider(this).get(WeatherViewModel::class.java)
+                viewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -39,8 +34,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Deprecated("Deprecated in Java")
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         when (requestCode) {
@@ -49,7 +43,7 @@ class MainActivity : ComponentActivity() {
                     viewModel.hasLocationPermission = true
                     viewModel.getWeatherUpdate()
                 } else {
-                    viewModel.hasLocationPermission = false
+//                    viewModel.hasLocationPermission = false
                     // TODO
                     // Explain to the user that the feature is unavailable because
                     // the feature requires a permission that the user has denied.

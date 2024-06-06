@@ -1,9 +1,7 @@
 package com.example.weatherapp.ui
 
 import android.Manifest
-import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.compose.runtime.getValue
@@ -12,16 +10,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusRequester
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherapp.MainActivity
 import com.example.weatherapp.model.WeatherData
 import com.example.weatherapp.network.WeatherApi
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+
 
 class WeatherViewModel(application: Application): AndroidViewModel(application){
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
@@ -36,9 +33,7 @@ class WeatherViewModel(application: Application): AndroidViewModel(application){
     var isSearchClicked by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
 
-    private suspend fun getLocation(
-        fusedLocationClient: FusedLocationProviderClient
-    ): Location? {
+    private suspend fun getLocation(): Location? {
         return try {
             if (ActivityCompat.checkSelfPermission(
                     getApplication(),
@@ -67,7 +62,7 @@ class WeatherViewModel(application: Application): AndroidViewModel(application){
             if (locationName != null) {
                 location = locationName
             } else {
-                val currentLocation = getLocation(fusedLocationClient)
+                val currentLocation = getLocation()
 
                 if (currentLocation != null) {
                     location = "${currentLocation.latitude},${currentLocation.longitude}"

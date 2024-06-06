@@ -1,6 +1,5 @@
 package com.example.weatherapp.ui
 
-
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -44,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
+
 
 @Composable
 fun WeatherApp(viewModel: WeatherViewModel) {
@@ -249,7 +249,7 @@ fun WeatherCard(
     title: String?,
     icon: Painter? = null,
     iconDescription: String? = null,
-    content: @Composable() () -> Unit
+    content: @Composable () -> Unit
 ) {
     Card(
         elevation = CardDefaults.cardElevation(
