@@ -1,8 +1,10 @@
 package com.example.weatherapp.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.pm.PackageManager
+import android.icu.text.SimpleDateFormat
 import android.location.Location
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +21,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.time.Clock
+import java.util.Date
 
 
 class WeatherViewModel(application: Application) : AndroidViewModel(application) {
@@ -86,5 +90,19 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
         focusRequester.freeFocus()
         isSearchClicked = false
         searchQuery = ""
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getTimeHour(timestamp: Long): String {
+        val date = Date(timestamp)
+
+        return SimpleDateFormat("H:mm").format(date)
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    fun getTimeDay(timestamp: Long): String {
+        val date = Date(timestamp)
+
+        return SimpleDateFormat("EEE").format(date)
     }
 }

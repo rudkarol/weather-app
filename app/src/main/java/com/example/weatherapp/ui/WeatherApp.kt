@@ -52,7 +52,7 @@ fun WeatherApp(viewModel: WeatherViewModel) {
     }
 
     Scaffold(
-        topBar = { TopBar(viewModel.conditions, viewModel) },
+        topBar = { TopBar(viewModel) },
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -63,7 +63,7 @@ fun WeatherApp(viewModel: WeatherViewModel) {
             }
     ) { innerPadding ->
         if (viewModel.hasLocationPermission || viewModel.searchFieldUsed) {
-            Content(viewModel.conditions, innerPadding)
+            Content(viewModel.conditions, viewModel, innerPadding)
         } else {
             ErrorContent(innerPadding)
         }
@@ -71,7 +71,7 @@ fun WeatherApp(viewModel: WeatherViewModel) {
 }
 
 @Composable
-fun Content(conditions: WeatherData, innerPadding: PaddingValues) {
+fun Content(conditions: WeatherData, viewModel: WeatherViewModel, innerPadding: PaddingValues) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
@@ -86,11 +86,11 @@ fun Content(conditions: WeatherData, innerPadding: PaddingValues) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        DailyForecastCard(conditions)
+        DailyForecastCard(viewModel)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        HourlyForecastCard(conditions)
+        HourlyForecastCard(viewModel)
     }
 }
 
@@ -116,7 +116,7 @@ fun ErrorContent(innerPadding: PaddingValues) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(conditions: WeatherData, viewModel: WeatherViewModel) {
+fun TopBar(viewModel: WeatherViewModel) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
     CenterAlignedTopAppBar(
@@ -147,7 +147,7 @@ fun TopBar(conditions: WeatherData, viewModel: WeatherViewModel) {
                 }
             } else {
                 Text(
-                    text = conditions.location?.name ?: "Weather App",
+                    text = viewModel.conditions.location?.name ?: "Weather App",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -185,20 +185,20 @@ fun TopBar(conditions: WeatherData, viewModel: WeatherViewModel) {
 }
 
 @Composable
-fun DailyForecastCard(conditions: WeatherData) {
+fun DailyForecastCard(viewModel: WeatherViewModel) {
     WeatherCard(
         title = "3 Day Forecast",
         icon = painterResource(id = R.drawable.calendar_today_24dp_fill0_wght400_grad0_opsz24),
         iconDescription = "3 Day Forecast"
     ) {
         LazyColumn {
-            conditions.forecast?.forecastDay?.let {
+            viewModel.conditions.forecast?.forecastDay?.let {
                 items(it.size) { index ->
-                    val timestamp = conditions.forecast.forecastDay[index].dateEpoch
-                    val maxTempC = conditions.forecast.forecastDay[index].day.maxTempC
+                    val timestamp = viewModel.conditions.forecast!!.forecastDay[index].dateEpoch * 1000
+                    val maxTempC = viewModel.conditions.forecast!!.forecastDay[index].day.maxTempC
 
                     Text(
-                        text = "$timestamp $maxTempC",
+                        text = "${viewModel.getTimeDay(timestamp)} $maxTempC°C",
                         modifier = Modifier
                             .padding(8.dp)
                     )
@@ -209,31 +209,31 @@ fun DailyForecastCard(conditions: WeatherData) {
 }
 
 @Composable
-fun HourlyForecastCard(conditions: WeatherData) {
+fun HourlyForecastCard(viewModel: WeatherViewModel) {
     WeatherCard(
         title = "24h Forecast",
         icon = painterResource(id = R.drawable.schedule_24dp_fill0_wght400_grad0_opsz24),
         iconDescription = "24h Forecast"
     ) {
         LazyRow {
-            conditions.forecast?.forecastDay?.get(0)?.hour.let {
+            viewModel.conditions.forecast?.forecastDay?.get(0)?.hour.let {
                 if (it != null) {
                     items(it.size) { index ->
-                        val timestamp =
-                            conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.timeEpoch
-                        val tempC =
-                            conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
+                        val timestamp = viewModel.conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.timeEpoch?.times(
+                            1000
+                        )
+                        val tempC = viewModel.conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
 
                         Column(
                             modifier = Modifier.padding(8.dp)
                         ) {
                             Text(
-                                text = "$timestamp",
+                                text = viewModel.getTimeHour(timestamp!!),
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
 
                             Text(
-                                text = "$tempC",
+                                text = "$tempC°C",
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
