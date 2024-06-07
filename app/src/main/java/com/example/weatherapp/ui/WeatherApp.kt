@@ -84,6 +84,11 @@ fun Content(conditions: WeatherData, viewModel: WeatherViewModel, innerPadding: 
             fontSize = 64.sp
         )
 
+        Text (
+            text = conditions.current?.condition?.text ?: "",
+            fontSize = 18.sp
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
 
         DailyForecastCard(viewModel)
@@ -91,6 +96,15 @@ fun Content(conditions: WeatherData, viewModel: WeatherViewModel, innerPadding: 
         Spacer(modifier = Modifier.height(24.dp))
 
         HourlyForecastCard(viewModel)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            InfoCardLeft(viewModel, Modifier.weight(1f))
+            InfoCardRight(viewModel, Modifier.weight(1f))
+        }
     }
 }
 
@@ -189,19 +203,27 @@ fun DailyForecastCard(viewModel: WeatherViewModel) {
     WeatherCard(
         title = "3 Day Forecast",
         icon = painterResource(id = R.drawable.calendar_today_24dp_fill0_wght400_grad0_opsz24),
-        iconDescription = "3 Day Forecast"
+        iconDescription = "3 Day Forecast",
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         LazyColumn {
             viewModel.conditions.forecast?.forecastDay?.let {
                 items(it.size) { index ->
                     val timestamp = viewModel.conditions.forecast!!.forecastDay[index].dateEpoch * 1000
                     val maxTempC = viewModel.conditions.forecast!!.forecastDay[index].day.maxTempC
+                    val minTemp = viewModel.conditions.forecast!!.forecastDay[index].day.minTempC
 
-                    Text(
-                        text = "${viewModel.getTimeDay(timestamp)} $maxTempC°C",
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
                             .padding(8.dp)
-                    )
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = viewModel.getTimeDay(timestamp))
+                        Text(text = viewModel.conditions.forecast!!.forecastDay[index].day.condition.text)
+                        Text(text = "$maxTempC°C/$minTemp°C")
+                    }
                 }
             }
         }
@@ -213,7 +235,8 @@ fun HourlyForecastCard(viewModel: WeatherViewModel) {
     WeatherCard(
         title = "24h Forecast",
         icon = painterResource(id = R.drawable.schedule_24dp_fill0_wght400_grad0_opsz24),
-        iconDescription = "24h Forecast"
+        iconDescription = "24h Forecast",
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         LazyRow {
             viewModel.conditions.forecast?.forecastDay?.get(0)?.hour.let {
@@ -225,6 +248,7 @@ fun HourlyForecastCard(viewModel: WeatherViewModel) {
                         val tempC = viewModel.conditions.forecast?.forecastDay?.get(0)?.hour?.get(index)?.tempC
 
                         Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(8.dp)
                         ) {
                             Text(
@@ -245,8 +269,109 @@ fun HourlyForecastCard(viewModel: WeatherViewModel) {
 }
 
 @Composable
+fun InfoCardLeft(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
+    WeatherCard(
+        modifier = modifier
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+    ) {
+        Column {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Humidity: ")
+                Text(text = "${viewModel.conditions.current?.humidity}%")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Feels like: ")
+                Text(text = "${viewModel.conditions.current?.feelsLikeC}\u00B0C")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Pressure: ")
+                Text(text = "${viewModel.conditions.current?.pressureMb}mb")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "UV Index: ")
+                Text(text = "${viewModel.conditions.current?.uv}")
+            }
+        }
+    }
+}
+
+@Composable
+fun InfoCardRight(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
+    WeatherCard(
+        modifier = modifier
+            .padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+    ) {
+        Column {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Wind: ")
+                Text(text = "${viewModel.conditions.current?.windKph}km/h")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Wind Direction: ")
+                Text(text = "${viewModel.conditions.current?.windDirection}")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Sunrise: ")
+                Text(text = "${viewModel.conditions.forecast?.forecastDay?.get(0)?.astro?.sunrise}")
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(text = "Sunset: ")
+                Text(text = "${viewModel.conditions.forecast?.forecastDay?.get(0)?.astro?.sunset}")
+            }
+        }
+    }
+}
+
+@Composable
 fun WeatherCard(
-    title: String?,
+    modifier: Modifier = Modifier,
+    title: String? = null,
     icon: Painter? = null,
     iconDescription: String? = null,
     content: @Composable () -> Unit
@@ -255,9 +380,7 @@ fun WeatherCard(
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp
         ),
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
+        modifier = modifier
     ) {
         Column {
             if (title != null) {

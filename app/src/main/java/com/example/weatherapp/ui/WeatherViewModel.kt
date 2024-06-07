@@ -21,7 +21,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.time.Clock
 import java.util.Date
 
 
