@@ -6,6 +6,7 @@ import android.app.Application
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.location.Location
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -39,6 +40,10 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     var isSearchClicked by mutableStateOf(false)
     var searchQuery by mutableStateOf("")
 
+    var showSnackbar by mutableStateOf(false)
+    var snackbarText by mutableStateOf("")
+
+
     private suspend fun getLocation(): Location? {
         return try {
             if (ActivityCompat.checkSelfPermission(
@@ -69,10 +74,10 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
                 }
             }
 
-            val newConditions = getWeather(location)
+            val response = getWeather(location)
 
-            if (newConditions != null) {
-                conditions = newConditions
+            if (response != null) {
+                conditions = response
             }
         }
     }
@@ -80,7 +85,26 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     private suspend fun getWeather(location: String): WeatherData? {
         return try {
             WeatherApi.retrofitService.getWeather(location)
-        } catch (e: Exception) {
+        }
+        catch (e: retrofit2.HttpException) {
+
+            snackbarText = if (e.code() == 400) {
+                "No matching location found"
+            } else {
+                "An error occurred"
+            }
+
+            showSnackbar = true
+            null
+        }
+        catch (e: java.net.UnknownHostException) {
+            snackbarText = "Connection error - check your internet connection"
+            showSnackbar = true
+            null
+        }
+        catch (e: Exception) {
+            snackbarText = "An error occurred"
+            showSnackbar = true
             null
         }
     }

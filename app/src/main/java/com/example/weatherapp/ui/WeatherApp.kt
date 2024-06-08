@@ -1,5 +1,6 @@
 package com.example.weatherapp.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,11 +25,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
@@ -43,16 +50,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
+import kotlinx.coroutines.launch
 
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun WeatherApp(viewModel: WeatherViewModel) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+
     LaunchedEffect(key1 = LocalContext.current) {
         viewModel.getWeatherUpdate(null)
     }
 
     Scaffold(
         topBar = { TopBar(viewModel) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },  // Add this line
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -62,6 +76,14 @@ fun WeatherApp(viewModel: WeatherViewModel) {
                 })
             }
     ) { innerPadding ->
+        if (viewModel.showSnackbar) {
+            scope.launch {
+                snackbarHostState.showSnackbar(message =  viewModel.snackbarText, duration =  SnackbarDuration.Short)
+            }
+
+            viewModel.showSnackbar = false
+        }
+
         if (viewModel.hasLocationPermission || viewModel.searchFieldUsed) {
             Content(viewModel.conditions, viewModel, innerPadding)
         } else {
