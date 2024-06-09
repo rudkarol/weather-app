@@ -52,7 +52,7 @@ import com.example.weatherapp.model.WeatherData
 fun WeatherApp(viewModel: WeatherViewModel) {
     Scaffold(
         topBar = { TopBar(viewModel) },
-        snackbarHost = { SnackbarHost(hostState = viewModel.snackbarHostState) },  // Add this line
+        snackbarHost = { SnackbarHost(hostState = viewModel.snackbarHostState) },
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -310,7 +310,7 @@ fun InfoCardLeft(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Humidity: ")
-                Text(text = "${viewModel.conditions.current?.humidity}%")
+                Text(text = "${viewModel.conditions.current?.humidity?.toInt()}%")
             }
 
             Row(
@@ -330,7 +330,7 @@ fun InfoCardLeft(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Pressure: ")
-                Text(text = "${viewModel.conditions.current?.pressureMb?.toInt()}mb")
+                Text(text = "${viewModel.conditions.current?.pressureMb?.toInt()} mb")
             }
 
             Row(
@@ -340,7 +340,7 @@ fun InfoCardLeft(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "UV Index: ")
-                Text(text = "${viewModel.conditions.current?.uv}")
+                Text(text = "${viewModel.conditions.current?.uv?.toInt()}")
             }
         }
     }
@@ -360,7 +360,7 @@ fun InfoCardRight(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Wind: ")
-                Text(text = "${viewModel.conditions.current?.windKph}km/h")
+                Text(text = "${viewModel.conditions.current?.windKph} km/h")
             }
 
             Row(

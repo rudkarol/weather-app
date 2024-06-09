@@ -70,14 +70,8 @@ class MainActivity : ComponentActivity() {
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     viewModel.hasLocationPermission = true
                     viewModel.getWeatherUpdate()
-                } else {
-                    // TODO
-                    // Explain to the user that the feature is unavailable because
-                    // the feature requires a permission that the user has denied.
-                    // At the same time, respect the user's decision. Don't link to
-                    // system settings in an effort to convince the user to change
-                    // their decision.
                 }
+
                 return
             }
         }
