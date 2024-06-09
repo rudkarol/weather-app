@@ -22,10 +22,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        viewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
+
+        viewModel.getWeatherUpdate()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
         setContent {
             WeatherAppTheme {
-                viewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
-
                 viewModel.requestLocationPermission.observe(this@MainActivity) { shouldRequest ->
                     if (shouldRequest) {
                         requestLocationPermission()
