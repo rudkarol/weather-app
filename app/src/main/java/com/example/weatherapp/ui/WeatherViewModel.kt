@@ -3,10 +3,14 @@ package com.example.weatherapp.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.location.Location
-import android.util.Log
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,7 +45,10 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
     var searchQuery by mutableStateOf("")
 
     var showSnackbar by mutableStateOf(false)
-    var snackbarText by mutableStateOf("")
+    private var snackbarText by mutableStateOf("")
+    val snackbarHostState =  SnackbarHostState()
+    var initialRun by mutableStateOf(true)
+    var networkState by mutableStateOf(false)
 
 
     private suspend fun getLocation(): Location? {
@@ -64,6 +71,8 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
 
     fun getWeatherUpdate(locationName: String? = null) {
         viewModelScope.launch {
+            networkState = checkNetworkState()
+
             if (locationName != null) {
                 location = locationName
             } else {
@@ -84,7 +93,11 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
 
     private suspend fun getWeather(location: String): WeatherData? {
         return try {
-            WeatherApi.retrofitService.getWeather(location)
+            val response = WeatherApi.retrofitService.getWeather(location)
+            initialRun = false
+            showSnackbar = false
+
+            response
         }
         catch (e: retrofit2.HttpException) {
 
@@ -106,6 +119,27 @@ class WeatherViewModel(application: Application) : AndroidViewModel(application)
             snackbarText = "An error occurred"
             showSnackbar = true
             null
+        }
+    }
+
+    private fun checkNetworkState(): Boolean {
+        val connectivityManager = getApplication<Application>().applicationContext.getSystemService(
+            Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val network = connectivityManager.activeNetwork ?: return false
+        val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return when {
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
+        }
+    }
+
+    fun showSnackbar() {
+        viewModelScope.launch {
+            snackbarHostState.showSnackbar(message = snackbarText, duration = SnackbarDuration.Short)
+            showSnackbar = false
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.weatherapp.ui
 import android.annotation.SuppressLint
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,23 +26,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -50,23 +45,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.weatherapp.R
 import com.example.weatherapp.model.WeatherData
-import kotlinx.coroutines.launch
 
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun WeatherApp(viewModel: WeatherViewModel) {
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-
-
-    LaunchedEffect(key1 = LocalContext.current) {
-        viewModel.getWeatherUpdate(null)
-    }
-
     Scaffold(
         topBar = { TopBar(viewModel) },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },  // Add this line
+        snackbarHost = { SnackbarHost(hostState = viewModel.snackbarHostState) },  // Add this line
         modifier = Modifier
             .pointerInput(Unit) {
                 detectTapGestures(onTap = {
@@ -76,18 +62,17 @@ fun WeatherApp(viewModel: WeatherViewModel) {
                 })
             }
     ) { innerPadding ->
-        if (viewModel.showSnackbar) {
-            scope.launch {
-                snackbarHostState.showSnackbar(message =  viewModel.snackbarText, duration =  SnackbarDuration.Short)
-            }
-
-            viewModel.showSnackbar = false
-        }
-
-        if (viewModel.hasLocationPermission || viewModel.searchFieldUsed) {
+        if (!viewModel.initialRun) {
             Content(viewModel.conditions, viewModel, innerPadding)
-        } else {
-            ErrorContent(innerPadding)
+        }
+        else if (!viewModel.networkState) {
+            ErrorContent(innerPadding, 1, viewModel)
+        }
+        else if (!viewModel.hasLocationPermission) {
+            ErrorContent(innerPadding, 0, viewModel)
+        }
+        else {
+            Box(modifier = Modifier.fillMaxSize())
         }
     }
 }
@@ -128,10 +113,31 @@ fun Content(conditions: WeatherData, viewModel: WeatherViewModel, innerPadding: 
             InfoCardRight(viewModel, Modifier.weight(1f))
         }
     }
+
+    if (!viewModel.initialRun && viewModel.showSnackbar) {
+        viewModel.showSnackbar()
+    }
 }
 
 @Composable
-fun ErrorContent(innerPadding: PaddingValues) {
+fun ErrorContent(innerPadding: PaddingValues, errorCode: Int, viewModel: WeatherViewModel) {
+    val icon: Int
+    val message: String
+
+    if (errorCode == 0) {
+//        0 = permission error
+        icon = R.drawable.location_off_24dp_fill0_wght400_grad0_opsz24
+        message = "Enable location services or enter a location"
+    } else {
+//        1 = connection error
+        icon = R.drawable.signal_disconnected_24dp_fill0_wght400_grad0_opsz24
+        message = "Connection error - check your internet connection"
+
+        if ((!viewModel.initialRun || viewModel.searchFieldUsed) && viewModel.showSnackbar) {
+            viewModel.showSnackbar()
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -140,13 +146,13 @@ fun ErrorContent(innerPadding: PaddingValues) {
             .fillMaxSize()
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.location_off_24dp_fill0_wght400_grad0_opsz24),
-            contentDescription = "Location permission required",
+            painter = painterResource(id = icon),
+            contentDescription = message,
             modifier = Modifier
                 .size(128.dp)
                 .padding(bottom = 16.dp)
         )
-        Text("App requires location permission to function")
+        Text(message)
     }
 }
 
@@ -324,7 +330,7 @@ fun InfoCardLeft(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
             ) {
                 Text(text = "Pressure: ")
-                Text(text = "${viewModel.conditions.current?.pressureMb}mb")
+                Text(text = "${viewModel.conditions.current?.pressureMb?.toInt()}mb")
             }
 
             Row(
@@ -363,7 +369,7 @@ fun InfoCardRight(viewModel: WeatherViewModel, modifier: Modifier = Modifier) {
                     .padding(8.dp)
                     .fillMaxWidth()
             ) {
-                Text(text = "Wind Direction: ")
+                Text(text = "Direction: ")
                 Text(text = "${viewModel.conditions.current?.windDirection}")
             }
 
